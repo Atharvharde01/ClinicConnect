@@ -25,7 +25,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import DoctorsPage from "../pages/Admin/doctors/DoctorsPage";
 import ReceptionistsPage from "../pages/Admin/receptionists/ReceptionistsPage";
 import PharmacistsPage from "../pages/Admin/pharmacists/PharmacistsPage";
-import DepartmentsPage from "../pages/Admin/Departments/DepartmentsPage";
+import DepartmentsPage from "../pages/Admin/departments/DepartmentsPage";
 import PatientsPage from "../pages/Admin/patients/PatientsPage";
 
 

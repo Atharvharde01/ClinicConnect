@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   searchPatients,
   getPatientByPatientId,
-} from "../../../services/patientservice";
+} from "../../../services/patientService";
 
 function PatientDetails({
   onEditProfile,

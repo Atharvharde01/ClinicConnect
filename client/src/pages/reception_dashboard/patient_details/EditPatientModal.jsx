@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Modal from "../../../components/common/Modal";
 import Button from "../../../components/common/Button";
 import Input from "../../../components/common/Input";
-import { updatePatientProfile } from "../../../services/patientservice";
+import { updatePatientProfile } from "../../../services/patientService";
 import { getApiErrorMessage } from "../../../services/api";
 
 function EditPatientModal({ isOpen, onClose, patient, onPatientUpdated }) {
