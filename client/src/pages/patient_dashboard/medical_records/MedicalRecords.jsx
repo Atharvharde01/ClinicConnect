@@ -4,6 +4,7 @@ import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
 import { medicalRecords as staticRecords } from "../data/appointments";
 import { getPatientReports } from "../../../services/patientService";
+import getAssetUrl from "../../../utils/getAssetUrl";
 import "../../../styles/patient_dashboard.css";
 
 function MedicalRecords() {
@@ -67,7 +68,7 @@ function MedicalRecords() {
             </dl>
             {record.reportFile ? (
               <a
-                href={`http://localhost:5000/${record.reportFile.replace(/\\/g, "/")}`}
+                href={getAssetUrl(record.reportFile)}
                 target="_blank"
                 rel="noreferrer"
                 className="pd-compact-button"

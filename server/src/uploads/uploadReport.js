@@ -1,32 +1,5 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-
-  const uploadPath = "uploads/reports";
-
-  if (!fs.existsSync(uploadPath)) {
-    fs.mkdirSync(uploadPath, {
-      recursive: true,
-    });
-  }
-
-  cb(null, uploadPath);
-
-},
-
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
-
-    cb(
-      null,
-      uniqueName + path.extname(file.originalname)
-    );
-  },
-});
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -36,7 +9,10 @@ const fileFilter = (req, file, cb) => {
     "image/png",
   ];
 
-  if (allowedTypes.includes(file.mimetype)) {
+  const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
+  const extension = path.extname(file.originalname).toLowerCase();
+
+  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(extension)) {
     cb(null, true);
   } else {
     cb(
@@ -49,7 +25,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const uploadReport = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024,

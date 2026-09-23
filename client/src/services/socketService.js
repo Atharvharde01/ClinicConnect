@@ -18,7 +18,9 @@ class SocketService {
     if (this.socket) this.disconnect();
 
     this.token = token;
-    this.socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
+    const backendRoot = import.meta.env.VITE_API_URL?.replace(/\/+$/, "");
+
+    this.socket = io(backendRoot, {
       transports: ["websocket"],
       autoConnect: true,
       auth: { token },

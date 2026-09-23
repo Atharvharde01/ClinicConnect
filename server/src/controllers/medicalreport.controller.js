@@ -7,6 +7,7 @@ import { validateMedicalReport } from "../validators/medicalReport.validator.js"
 
 import Patient from "../models/Patient.js";
 import { paginateQuery } from "../utils/paginate.js";
+import { uploadMedicalReport } from "../services/medicalReportUpload.service.js";
 
 export const createMedicalReport = async (req, res) => {
   try {
@@ -74,6 +75,10 @@ export const createMedicalReport = async (req, res) => {
       });
     }
 
+    const uploadedReport = req.file
+      ? await uploadMedicalReport(req.file)
+      : null;
+
     const report = await MedicalReport.create({
       appointment: appointment || null,
       patient: patientId,
@@ -82,7 +87,7 @@ export const createMedicalReport = async (req, res) => {
       title,
       findings: findings || "",
       remarks: remarks || "",
-      reportFile: req.file ? req.file.path : "",
+      reportFile: uploadedReport?.secure_url || "",
       status: status || "Completed",
     });
 
@@ -292,9 +297,11 @@ export const updateMedicalReport = async (req, res) => {
 
     if (status) report.status = status;
 
-    if (req.file) {
-      report.reportFile = req.file.path;
-    }
+    const uploadedReport = req.file
+      ? await uploadMedicalReport(req.file)
+      : null;
+
+    if (uploadedReport?.secure_url) report.reportFile = uploadedReport.secure_url;
 
     await report.save();
 

@@ -6,12 +6,9 @@ import {
 } from "../../../services/medicalReportService";
 
 import UploadReportModal from "./UploadReportModal";
+import getAssetUrl from "../../../utils/getAssetUrl";
 
 import "../../../styles/doctor_dashboard.css";
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:5000";
 
 function DiagnosticReports({
   appointment,
@@ -104,8 +101,7 @@ function DiagnosticReports({
   const openReport = (reportFile) => {
   if (!reportFile) return;
 
-  const fileUrl =
-    `${API_BASE}/${reportFile.replace(/\\/g, "/")}`;
+  const fileUrl = getAssetUrl(reportFile);
 
   const extension =
     reportFile.split(".").pop().toLowerCase();
@@ -176,7 +172,10 @@ function DiagnosticReports({
         <div className="doc-report-list">
 
           {reports.map(
-            (report) => (
+            (report) => {
+              const reportUrl = getAssetUrl(report.reportFile);
+
+              return (
 
              <div className="doc-report-card">
 
@@ -220,7 +219,7 @@ function DiagnosticReports({
         </button>
 
         <a
-            href={`${API_BASE}/${report.reportFile.replace(/\\/g,"/")}`}
+            href={reportUrl}
             target="_blank"
             rel="noreferrer"
             download
@@ -243,7 +242,8 @@ function DiagnosticReports({
 
 </div>
 
-            )
+              );
+            }
           )}
 
         </div>

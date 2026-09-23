@@ -70,15 +70,9 @@ export const authorize = (...roles) => {
     const allowedRoles = roles.map((r) => String(r).toLowerCase());
 
     if (!allowedRoles.includes(userRole)) {
-      // TEMPORARY DIAGNOSTIC — remove after confirming fix
-      console.warn(
-        `[AUTH] 403 on ${req.method} ${req.originalUrl} | user._id=${req.user._id} | db_role="${req.user.role}" | required_roles=${JSON.stringify(roles)}`
-      );
       return res.status(403).json({
         success: false,
         message: "Access denied.",
-        // TEMPORARY — remove after confirming fix:
-        _debug: { db_role: req.user.role, required: roles },
       });
     }
 

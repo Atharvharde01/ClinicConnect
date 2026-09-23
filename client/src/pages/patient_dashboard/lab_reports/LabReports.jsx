@@ -4,6 +4,7 @@ import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
 import { reports as staticReports } from "../data/reports";
 import { getPatientReports, deletePatientReport } from "../../../services/patientService";
+import getAssetUrl from "../../../utils/getAssetUrl";
 import "../../../styles/patient_dashboard.css";
 
 function LabReports() {
@@ -79,7 +80,7 @@ function LabReports() {
               <div style={{ display: "flex", gap: "6px" }}>
                 {report.reportFile ? (
                   <a
-                    href={`http://localhost:5000/${report.reportFile.replace(/\\/g, "/")}`}
+                    href={getAssetUrl(report.reportFile)}
                     target="_blank"
                     rel="noreferrer"
                     className="pd-report-action"
