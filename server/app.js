@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import mongoose from "mongoose";
 
 import authRoutes from "../server/src/routes/auth.routes.js";
 // import testRoutes from "../server/src/routes/test.routes.js";
@@ -43,6 +44,27 @@ app.get("/", (req, res) => {
     success: true,
     message: "ClinicConnect API Running",
   });
+});
+
+// Health check route for monitoring / UptimeRobot
+app.get("/health", async (req, res) => {
+  try {
+    await mongoose.connection.db.command({ ping: 1 });
+
+    res.status(200).json({
+      status: "OK",
+      service: "ClinicConnect API",
+      database: "connected",
+    });
+  } catch (error) {
+    console.error("Health check failed:", error.message);
+
+    res.status(503).json({
+      status: "ERROR",
+      service: "ClinicConnect API",
+      database: "disconnected",
+    });
+  }
 });
 
 // Routes
