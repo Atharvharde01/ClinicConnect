@@ -40,7 +40,11 @@ function Navbar() {
       <nav className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
         <div className="navbar-inner">
           <div className="navbar-logo" onClick={(e) => handleLinkClick(e, "#home")}>
-            <span className="material-symbols-outlined filled navbar-logo-icon">local_hospital</span>
+            <img
+              className="navbar-logo-icon"
+              src="/assets/clinicconnect-logo.png"
+              alt="Clinic Connect logo"
+            />
             <span className="navbar-logo-text">
               Clinic Connect
             </span>

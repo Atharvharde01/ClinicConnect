@@ -219,8 +219,10 @@
 }
 
 .navbar-logo-icon {
-  font-size: 30px;
-  color: var(--primary);
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .navbar-logo-text {
@@ -352,10 +354,20 @@
 }
 
 .mobile-drawer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 600;
   color: var(--primary);
+}
+
+.mobile-drawer-brand img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .mobile-drawer-header button {

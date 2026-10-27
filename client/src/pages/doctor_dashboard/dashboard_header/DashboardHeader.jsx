@@ -287,16 +287,11 @@ function DashboardHeader({
           }
         >
 
-          <div
+          <img
             className="doc-brand-mark"
-            aria-hidden="true"
-          >
-
-            <span className="material-symbols-outlined filled">
-              medical_services
-            </span>
-
-          </div>
+            src="/assets/clinicconnect-logo.png"
+            alt="Clinic Connect logo"
+          />
 
           <div>
 

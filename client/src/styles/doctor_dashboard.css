@@ -52,14 +52,9 @@
 .doc-brand-mark {
   width: 40px;
   height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 7px;
-  color: var(--on-primary);
-  background: #16a34a;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
-
-.doc-brand-mark .material-symbols-outlined { font-size: 22px; }
 
 .doc-brand-name {
   color: #16a34a;

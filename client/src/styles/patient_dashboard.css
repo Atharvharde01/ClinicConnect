@@ -22,7 +22,7 @@
 .pd-sidebar { position: fixed; z-index: 30; inset: 0 auto 0 0; width: 288px; border-right: 1px solid rgba(189, 202, 186, .3); background: #fff; }
 .pd-sidebar-inner { display: flex; min-height: 100%; flex-direction: column; padding: 24px 16px 16px; }
 .pd-brand { display: flex; align-items: center; gap: 12px; margin: 8px 8px 40px; }
-.pd-brand-mark { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 9px; background: var(--pd-primary); color: #fff; font-size: 22px; }
+.pd-brand-mark { width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; }
 .pd-brand strong, .pd-brand small, .pd-user-copy strong, .pd-user-copy small { display: block; }
 .pd-brand strong { color: var(--pd-primary); font-family: var(--font-display); font-size: 25px; font-weight: 700; letter-spacing: -.04em; line-height: 1.1; }
 .pd-brand small { margin-top: 4px; color: var(--pd-muted); font-size: 14px; }

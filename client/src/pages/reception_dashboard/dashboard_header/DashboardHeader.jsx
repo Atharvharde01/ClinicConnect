@@ -9,7 +9,6 @@ import socketService from "../../../services/socketService";
 import { getChats } from "../../../services/chatService";
 import "../../../styles/reception_dashboard.css";
 import receptionistImage from "../../../assets/patients/elena-rodriguez.jpg";
-import logo from "../../../assets/logo/clinicconnect-logo.svg";
 import ReceptionNotificationPanel from "./ReceptionNotificationPanel";
 import ChatUnreadToast from "../../../components/common/ChatUnreadToast";
 
@@ -79,7 +78,7 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
       brand={(
         <div className="rc-brand-navigation">
         <a className="rc-brand" href="#welcome">
-          <img src={logo} alt="ClinicConnect" />
+          <img src="/assets/clinicconnect-logo.png" alt="Clinic Connect logo" />
           <span>ClinicConnect</span>
         </a>
         <nav className="rc-dashboard-nav" aria-label="Reception dashboard navigation">

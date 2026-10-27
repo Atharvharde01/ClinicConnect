@@ -21,7 +21,10 @@ function MobileMenu({ isOpen, onClose }) {
     >
       <div className={`mobile-drawer-content ${isOpen ? "mobile-drawer-content-open" : ""}`}>
         <div className="mobile-drawer-header">
-          <span className="mobile-drawer-brand">Clinic Connect</span>
+          <span className="mobile-drawer-brand">
+            <img src="/assets/clinicconnect-logo.png" alt="Clinic Connect logo" />
+            <span>Clinic Connect</span>
+          </span>
           <button type="button" onClick={onClose} aria-label="Close menu">
             <span className="material-symbols-w">close</span>
           </button>

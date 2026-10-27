@@ -9,7 +9,6 @@ import {
   FiMenu,
   FiMessageSquare,
   FiSearch,
-  FiShield,
   FiUser,
   FiUsers,
 } from "react-icons/fi";
@@ -129,9 +128,11 @@ function DashboardHeader() {
       <aside className={`pd-sidebar ${isSidebarOpen ? "is-open" : ""}`}>
         <div className="pd-sidebar-inner">
           <a className="pd-brand" href="#dashboard" onClick={closeSidebar}>
-            <span className="pd-brand-mark">
-              <FiShield />
-            </span>
+            <img
+              className="pd-brand-mark"
+              src="/assets/clinicconnect-logo.png"
+              alt="Clinic Connect logo"
+            />
             <span>
               <strong>Clinic Connect</strong>
               <small>Patient Portal</small>

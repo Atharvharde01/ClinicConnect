@@ -652,7 +652,10 @@ useEffect(() => {
   return (
     <div className="pharmacy-dashboard">
       <Navbar as="nav" className="ph-topnav">
-        <div className="ph-brand">ClinicConnect</div>
+        <div className="ph-brand">
+          <img src="/assets/clinicconnect-logo.png" alt="Clinic Connect logo" />
+          <span>ClinicConnect</span>
+        </div>
         <div className={`ph-nav-links ${mobileNavOpen ? "is-open" : ""}`}>
           <button
             className={activeSection === "Dashboard" ? "is-active" : ""}

@@ -4,7 +4,6 @@ function Footer() {
       <div className="footer-grid">
         <div className="footer-brand">
           <div className="footer-logo">
-            <span className="material-symbols-outlined filled">local_hospital</span>
             <span>Clinic Connect</span>
           </div>
           <p>

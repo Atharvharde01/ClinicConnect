@@ -28,12 +28,22 @@
 }
 
 .ph-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--ph-primary);
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -.04em;
   white-space: nowrap;
+}
+
+.ph-brand img {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .ph-nav-links {
@@ -1655,6 +1665,11 @@
 
   .ph-brand {
     font-size: 17px;
+  }
+
+  .ph-brand img {
+    width: 28px;
+    height: 28px;
   }
 
   .ph-nav-links {
