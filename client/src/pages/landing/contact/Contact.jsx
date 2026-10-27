@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { usePendingReview } from "../../../context/PendingReviewContext";
@@ -7,7 +7,17 @@ import { createReview, updateReview } from "../../../services/reviewService";
 function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }) {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { pendingReview, saveReview, clearReview, isPending: hasPendingReview } = usePendingReview();
+  const {
+    pendingReview,
+    pendingReviewIntent,
+    startReviewAuthentication,
+    updatePendingReview,
+    clearReview,
+    claimPendingReviewSubmission,
+    markPendingReviewSubmissionFailed,
+    hasPendingReviewIntent,
+    canAutoSubmit,
+  } = usePendingReview();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -19,7 +29,7 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
-  const [autoSubmitting, setAutoSubmitting] = useState(false);
+  const attemptedOperationRef = useRef(null);
 
   // Sync form when editingReview changes
   useEffect(() => {
@@ -48,93 +58,116 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
     }
   }, [editingReview, user]);
 
-  // Auto-submit pending review after user returns from login
+  // Restore a review draft after returning from authentication.
   useEffect(() => {
+    if (!editingReview && hasPendingReviewIntent) {
+      setFormData({
+        firstName: pendingReview.firstName,
+        lastName: pendingReview.lastName,
+        rating: pendingReview.rating,
+        message: pendingReview.message,
+      });
+    }
+  }, [editingReview, hasPendingReviewIntent, pendingReview]);
+
+  useEffect(() => {
+    if (hasPendingReviewIntent && window.location.hash === "#contact") {
+      window.requestAnimationFrame(() => {
+        document.getElementById("contact")?.scrollIntoView({ block: "start" });
+      });
+    }
+  }, [hasPendingReviewIntent]);
+
+  // Auto-submit only an explicit, unclaimed review-authentication intent.
+  useEffect(() => {
+    const operationId = pendingReviewIntent?.operationId;
     if (
-      isAuthenticated &&
-      hasPendingReview &&
-      !editingReview &&
-      !autoSubmitting
+      !isAuthenticated ||
+      !canAutoSubmit ||
+      editingReview ||
+      !operationId ||
+      attemptedOperationRef.current === operationId ||
+      !claimPendingReviewSubmission(operationId)
     ) {
-      const doAutoSubmit = async () => {
-        setAutoSubmitting(true);
+      return;
+    }
 
-        // Populate form with pending review data for visual feedback
-        setFormData({
-          firstName: pendingReview.firstName,
-          lastName: pendingReview.lastName,
-          rating: pendingReview.rating,
-          message: pendingReview.message,
-        });
+    attemptedOperationRef.current = operationId;
+    setStatusMessage({
+      type: "info",
+      text: "Submitting your review...",
+    });
+    setSubmitting(true);
 
-        setStatusMessage({
-          type: "info",
-          text: "Submitting your review...",
-        });
-
-        setSubmitting(true);
-
-        const payload = {
-          firstName: pendingReview.firstName.trim(),
-          lastName: pendingReview.lastName.trim(),
-          rating: pendingReview.rating,
-          message: pendingReview.message.trim(),
-        };
-
-        try {
-          const response = await createReview(payload);
-
-          if (response && response.success && response.review) {
-            clearReview();
-
-            setStatusMessage({
-              type: "success",
-              text: "Thank you! Your review has been saved successfully.",
-            });
-
-            setFormData({
-              firstName: "",
-              lastName: "",
-              rating: 0,
-              message: "",
-            });
-            setHoverRating(0);
-            setErrors({});
-
-            if (typeof onReviewAdded === "function") {
-              onReviewAdded(response.review);
-            }
-
-            window.dispatchEvent(
-              new CustomEvent("clinic-connect-new-review", {
-                detail: response.review,
-              })
-            );
-          } else {
-            setStatusMessage({
-              type: "error",
-              text: response?.message || "Failed to submit review. Please try again.",
-            });
-          }
-        } catch (error) {
-          const errorMsg =
-            error?.response?.data?.message ||
-            error?.message ||
-            "An error occurred. Please check your connection and try again.";
-          setStatusMessage({
-            type: "error",
-            text: errorMsg,
-          });
-        } finally {
-          setSubmitting(false);
-          setAutoSubmitting(false);
-        }
+    const submitPendingReview = async () => {
+      const payload = {
+        firstName: pendingReview.firstName.trim(),
+        lastName: pendingReview.lastName.trim(),
+        rating: pendingReview.rating,
+        message: pendingReview.message.trim(),
       };
 
-      doAutoSubmit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, hasPendingReview]);
+      try {
+        const response = await createReview(payload);
+
+        if (response?.success && response.review) {
+          clearReview();
+          setStatusMessage({
+            type: "success",
+            text: "Thank you! Your review has been saved successfully.",
+          });
+          setFormData({
+            firstName: "",
+            lastName: "",
+            rating: 0,
+            message: "",
+          });
+          setHoverRating(0);
+          setErrors({});
+
+          if (typeof onReviewAdded === "function") {
+            onReviewAdded(response.review);
+          }
+
+          window.dispatchEvent(
+            new CustomEvent("clinic-connect-new-review", {
+              detail: response.review,
+            }),
+          );
+          return;
+        }
+
+        markPendingReviewSubmissionFailed(operationId);
+        setStatusMessage({
+          type: "error",
+          text: response?.message || "Failed to submit review. Please try again.",
+        });
+      } catch (error) {
+        markPendingReviewSubmissionFailed(operationId);
+        setStatusMessage({
+          type: "error",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "An error occurred. Please check your connection and try again.",
+        });
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    submitPendingReview();
+  }, [
+    canAutoSubmit,
+    claimPendingReviewSubmission,
+    clearReview,
+    editingReview,
+    isAuthenticated,
+    markPendingReviewSubmissionFailed,
+    onReviewAdded,
+    pendingReview,
+    pendingReviewIntent?.operationId,
+  ]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -209,7 +242,7 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
 
     // If not authenticated, save form data and redirect to login
     if (!isAuthenticated) {
-      saveReview({
+      startReviewAuthentication({
         firstName: formData.firstName,
         lastName: formData.lastName,
         rating: formData.rating,
@@ -278,10 +311,14 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
           });
         }
       } else {
-        // Create mode
+        if (hasPendingReviewIntent) {
+          updatePendingReview(formData);
+        }
+
         const response = await createReview(payload);
 
         if (response && response.success && response.review) {
+          clearReview();
           setStatusMessage({
             type: "success",
             text: "Thank you! Your review has been saved successfully.",
@@ -307,6 +344,9 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
             })
           );
         } else {
+          if (pendingReviewIntent?.operationId) {
+            markPendingReviewSubmissionFailed(pendingReviewIntent.operationId);
+          }
           setStatusMessage({
             type: "error",
             text: response?.message || "Failed to submit review. Please try again.",
@@ -314,6 +354,10 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
         }
       }
     } catch (error) {
+      if (!editingReview && pendingReviewIntent?.operationId) {
+        updatePendingReview(formData);
+        markPendingReviewSubmissionFailed(pendingReviewIntent.operationId);
+      }
       const errorMsg =
         error?.response?.data?.message ||
         error?.message ||

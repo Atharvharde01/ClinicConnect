@@ -1,4 +1,15 @@
-function MobileMenu({ isOpen, onClose }) {
+import { Link, useNavigate } from "react-router-dom";
+
+function MobileMenu({
+  isOpen,
+  onClose,
+  isAuthenticated,
+  portalLabel,
+  portalPath,
+  onSignout,
+}) {
+  const navigate = useNavigate();
+
   const handleLinkClick = (e, href) => {
     e.preventDefault();
     if (href === "#") return;
@@ -52,9 +63,40 @@ function MobileMenu({ isOpen, onClose }) {
           <a href="#book" className="btn btn-primary mobile-drawer-btn" onClick={(e) => handleLinkClick(e, "#book")}>
             Book Appointment
           </a>
-          <Link to="/login" className="btn btn-outline mobile-drawer-btn" onClick={onClose}>
-            Login
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline mobile-drawer-btn"
+                onClick={() => {
+                  onClose();
+                  onSignout();
+                }}
+              >
+                Signout
+              </button>
+              {portalPath && (
+                <button
+                  type="button"
+                  className="btn btn-outline mobile-drawer-btn"
+                  onClick={() => {
+                    onClose();
+                    navigate(portalPath);
+                  }}
+                >
+                  {portalLabel}
+                </button>
+              )}
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="btn btn-outline mobile-drawer-btn"
+              onClick={onClose}
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </div>
@@ -62,4 +104,3 @@ function MobileMenu({ isOpen, onClose }) {
 }
 
 export default MobileMenu;
-import { Link } from "react-router-dom";

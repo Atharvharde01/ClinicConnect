@@ -1,12 +1,28 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import MobileMenu from "./MobileMenu";
+import { useAuth } from "../../../context/AuthContext";
+import { usePendingReview } from "../../../context/PendingReviewContext";
+
+const dashboardPathByRole = {
+  patient: "/patient/dashboard",
+  doctor: "/doctor/dashboard",
+  receptionist: "/reception/dashboard",
+  pharmacist: "/pharmacy/dashboard",
+  admin: "/admin/dashboard",
+};
 
 function Navbar() {
   const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
+  const { clearReview } = usePendingReview();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState("#");
+  const role = user?.role?.toLowerCase();
+  const portalPath = dashboardPathByRole[role];
+  const portalLabel =
+    role === "patient" ? "Your Patient Portal" : "Your Dashboard";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,6 +49,12 @@ function Navbar() {
     }
   };
 
+  const handleSignout = () => {
+    clearReview();
+    logout();
+    setMenuOpen(false);
+    navigate("/", { replace: true });
+  };
 
 
   return (
@@ -75,13 +97,36 @@ function Navbar() {
           </div>
 
           <div className="navbar-actions">
-            <button
-              type="button"
-              className="navbar-login"
-              onClick={() => navigate("/login", { state: { fromNormalLogin: true } })}
-            >
-              Login
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  type="button"
+                  className="navbar-login"
+                  onClick={handleSignout}
+                >
+                  Signout
+                </button>
+                {portalPath && (
+                  <button
+                    type="button"
+                    className="navbar-login"
+                    onClick={() => navigate(portalPath)}
+                  >
+                    {portalLabel}
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                className="navbar-login"
+                onClick={() =>
+                  navigate("/login", { state: { fromNormalLogin: true } })
+                }
+              >
+                Login
+              </button>
+            )}
             <a href="#book" className="btn btn-primary navbar-book" onClick={(e) => handleLinkClick(e, "#book")}>
               Book Appointment
             </a>
@@ -98,7 +143,14 @@ function Navbar() {
         </div>
       </nav>
 
-      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        isAuthenticated={isAuthenticated}
+        portalLabel={portalLabel}
+        portalPath={portalPath}
+        onSignout={handleSignout}
+      />
     </>
   );
 }

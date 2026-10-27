@@ -30,7 +30,7 @@ function PatientLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { pendingAppointment, isPending, clearAppointment } = useAppointmentBooking();
-  const { isPending: hasReviewPending } = usePendingReview();
+  const { hasPendingReviewIntent } = usePendingReview();
   const {
     clearRegistrationSession,
     patientLogin,
@@ -204,9 +204,9 @@ function PatientLogin() {
 
       await patientLogin(email.trim().toLowerCase(), otp);
 
-      // If there is a pending review but no pending appointment,
-      // redirect to the landing page so the review auto-submits
-      if (hasReviewPending && !isPending) {
+      // An explicit review action takes the user back to its Landing Page form.
+      // Any appointment draft remains intact for its existing flow.
+      if (hasPendingReviewIntent) {
         navigate("/#contact", { replace: true });
         return;
       }
@@ -253,10 +253,10 @@ function PatientLogin() {
   };
 
   const handleBackNavigation = () => {
-    if (isPending) {
-      navigate("/#book");
-    } else if (hasReviewPending) {
+    if (hasPendingReviewIntent) {
       navigate("/#contact");
+    } else if (isPending) {
+      navigate("/#book");
     } else {
       navigate("/");
     }
@@ -302,7 +302,11 @@ function PatientLogin() {
               <span className="material-symbols-outlined" style={{ fontSize: "1.2rem" }}>
                 arrow_back
               </span>
-              {isPending ? "Back to Appointment Form" : "Back to Home"}
+              {hasPendingReviewIntent
+                ? "Back to Review"
+                : isPending
+                  ? "Back to Appointment Form"
+                  : "Back to Home"}
             </button>
 
             <div className="login-card-brand">
