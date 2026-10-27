@@ -27,6 +27,7 @@ import notificationRoutes from "./src/routes/notification.routes.js";
 import announcementRoutes from "./src/routes/announcement.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
 import publicRoutes from "./src/routes/public.routes.js";
+import reviewRoutes from "./src/routes/review.routes.js";
 
 
 const app = express();
@@ -93,5 +94,6 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 export default app;

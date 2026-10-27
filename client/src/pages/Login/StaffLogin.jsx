@@ -416,7 +416,7 @@ function StaffLogin() {
                       className="login-input"
                       id="login-email"
                       onChange={(event) => setEmail(event.target.value)}
-                      placeholder="e.g. john@clinicconnect.com"
+                      placeholder="e.g. clinicconnect@gmail.com"
                       required
                       type="email"
                       value={email}
