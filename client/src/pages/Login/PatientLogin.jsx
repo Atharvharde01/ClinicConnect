@@ -10,6 +10,7 @@ import "../../styles/login.css";
 import CompleteProfile from "./CompleteProfile";
 import useAppointmentFlow from "../../hooks/useAppointmentFlow";
 import { useAppointmentBooking } from "../../context/AppointmentBookingContext";
+import { usePendingReview } from "../../context/PendingReviewContext";
 
 const STEPS = {
   LOGIN: "LOGIN",
@@ -29,6 +30,7 @@ function PatientLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { pendingAppointment, isPending, clearAppointment } = useAppointmentBooking();
+  const { isPending: hasReviewPending } = usePendingReview();
   const {
     clearRegistrationSession,
     patientLogin,
@@ -73,6 +75,7 @@ function PatientLogin() {
       }
     } else if (location.pathname === "/login") {
       // If user intentionally clicked the normal Login button, clear stale booking/registration state
+      // but preserve pending review when arriving from the review form
       if (location.state?.fromNormalLogin) {
         clearRegistrationSession();
         clearAppointment();
@@ -81,6 +84,12 @@ function PatientLogin() {
         setOtpExpiresIn(0);
         setResendIn(0);
         setMessage("");
+        setStep(STEPS.LOGIN);
+        return;
+      }
+
+      // Coming from the review form — keep pending review, just proceed to login
+      if (location.state?.fromReview) {
         setStep(STEPS.LOGIN);
         return;
       }
@@ -195,6 +204,13 @@ function PatientLogin() {
 
       await patientLogin(email.trim().toLowerCase(), otp);
 
+      // If there is a pending review but no pending appointment,
+      // redirect to the landing page so the review auto-submits
+      if (hasReviewPending && !isPending) {
+        navigate("/#contact", { replace: true });
+        return;
+      }
+
       // isNewPatient: if there was a registration session, they just registered
       const wasNewPatient = !!getRegistrationSession()?.registrationToken;
       await completePendingAppointment({ isNewPatient: wasNewPatient });
@@ -239,6 +255,8 @@ function PatientLogin() {
   const handleBackNavigation = () => {
     if (isPending) {
       navigate("/#book");
+    } else if (hasReviewPending) {
+      navigate("/#contact");
     } else {
       navigate("/");
     }

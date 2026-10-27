@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AppointmentBookingProvider } from "./context/AppointmentBookingContext";
+import { PendingReviewProvider } from "./context/PendingReviewContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <SocketProvider>
           <AppointmentBookingProvider>
-            <App />
+            <PendingReviewProvider>
+              <App />
+            </PendingReviewProvider>
           </AppointmentBookingProvider>
         </SocketProvider>
       </AuthProvider>

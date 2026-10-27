@@ -2230,44 +2230,27 @@
   font-size: 20px;
 }
 
-.review-login-required {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--spacing-xl) var(--spacing-md);
-  gap: var(--spacing-md);
+.contact-form-alert.info {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
-.review-login-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(0, 107, 44, 0.1);
-  border-radius: 50%;
+.review-auth-hint {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  margin-top: var(--spacing-md);
+  font-size: 13px;
+  color: var(--on-surface-variant, #49454f);
+  opacity: 0.85;
+}
+
+.review-auth-hint .material-symbols-outlined {
+  font-size: 16px;
   color: var(--primary, #006b2c);
 }
 
-.review-login-icon .material-symbols-outlined {
-  font-size: 28px;
-}
-
-.review-login-required h4 {
-  font-family: var(--font-display, inherit);
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--on-surface, #191c1c);
-}
-
-.review-login-required p {
-  color: var(--on-surface-variant, #49454f);
-  font-size: 14px;
-  margin: 0;
-  max-width: 340px;
-}
 
 .contact-form-edit-badge {
   display: inline-flex;

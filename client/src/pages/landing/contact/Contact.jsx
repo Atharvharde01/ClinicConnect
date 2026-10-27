@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { usePendingReview } from "../../../context/PendingReviewContext";
 import { createReview, updateReview } from "../../../services/reviewService";
 
 function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }) {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { pendingReview, saveReview, clearReview, isPending: hasPendingReview } = usePendingReview();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -17,6 +19,7 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [autoSubmitting, setAutoSubmitting] = useState(false);
 
   // Sync form when editingReview changes
   useEffect(() => {
@@ -44,6 +47,94 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
       });
     }
   }, [editingReview, user]);
+
+  // Auto-submit pending review after user returns from login
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      hasPendingReview &&
+      !editingReview &&
+      !autoSubmitting
+    ) {
+      const doAutoSubmit = async () => {
+        setAutoSubmitting(true);
+
+        // Populate form with pending review data for visual feedback
+        setFormData({
+          firstName: pendingReview.firstName,
+          lastName: pendingReview.lastName,
+          rating: pendingReview.rating,
+          message: pendingReview.message,
+        });
+
+        setStatusMessage({
+          type: "info",
+          text: "Submitting your review...",
+        });
+
+        setSubmitting(true);
+
+        const payload = {
+          firstName: pendingReview.firstName.trim(),
+          lastName: pendingReview.lastName.trim(),
+          rating: pendingReview.rating,
+          message: pendingReview.message.trim(),
+        };
+
+        try {
+          const response = await createReview(payload);
+
+          if (response && response.success && response.review) {
+            clearReview();
+
+            setStatusMessage({
+              type: "success",
+              text: "Thank you! Your review has been saved successfully.",
+            });
+
+            setFormData({
+              firstName: "",
+              lastName: "",
+              rating: 0,
+              message: "",
+            });
+            setHoverRating(0);
+            setErrors({});
+
+            if (typeof onReviewAdded === "function") {
+              onReviewAdded(response.review);
+            }
+
+            window.dispatchEvent(
+              new CustomEvent("clinic-connect-new-review", {
+                detail: response.review,
+              })
+            );
+          } else {
+            setStatusMessage({
+              type: "error",
+              text: response?.message || "Failed to submit review. Please try again.",
+            });
+          }
+        } catch (error) {
+          const errorMsg =
+            error?.response?.data?.message ||
+            error?.message ||
+            "An error occurred. Please check your connection and try again.";
+          setStatusMessage({
+            type: "error",
+            text: errorMsg,
+          });
+        } finally {
+          setSubmitting(false);
+          setAutoSubmitting(false);
+        }
+      };
+
+      doAutoSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, hasPendingReview]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -112,15 +203,28 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
 
     if (submitting) return;
 
-    if (!isAuthenticated) {
-      setStatusMessage({
-        type: "error",
-        text: "You must be logged in to submit a review.",
-      });
+    if (!validateForm()) {
       return;
     }
 
-    if (!validateForm()) {
+    // If not authenticated, save form data and redirect to login
+    if (!isAuthenticated) {
+      saveReview({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        rating: formData.rating,
+        message: formData.message,
+      });
+
+      setStatusMessage({
+        type: "info",
+        text: "Redirecting to login... Your review will be submitted after you sign in.",
+      });
+
+      // Small delay so user can see the message
+      setTimeout(() => {
+        navigate("/login", { state: { fromReview: true } });
+      }, 600);
       return;
     }
 
@@ -286,193 +390,181 @@ function Contact({ onReviewAdded, onReviewUpdated, editingReview, onCancelEdit }
             </div>
           )}
 
-          {!isAuthenticated ? (
-            <div className="review-login-required">
-              <div className="review-login-icon">
-                <span className="material-symbols-outlined">lock</span>
-              </div>
-              <h4>Authentication Required</h4>
-              <p>Please log in to your account to share your patient review.</p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() =>
-                  navigate("/login", { state: { fromNormalLogin: true } })
-                }
-              >
-                Login to Review
-              </button>
+          {statusMessage && (
+            <div
+              className={`contact-form-alert ${statusMessage.type}`}
+              role="status"
+              aria-live="polite"
+            >
+              <span className="material-symbols-outlined">
+                {statusMessage.type === "success"
+                  ? "check_circle"
+                  : statusMessage.type === "info"
+                  ? "info"
+                  : "error"}
+              </span>
+              <span>{statusMessage.text}</span>
             </div>
-          ) : (
-            <>
-              {statusMessage && (
-                <div
-                  className={`contact-form-alert ${statusMessage.type}`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <span className="material-symbols-outlined">
-                    {statusMessage.type === "success"
-                      ? "check_circle"
-                      : "error"}
-                  </span>
-                  <span>{statusMessage.text}</span>
-                </div>
-              )}
+          )}
 
-              <form className="contact-form" onSubmit={handleSubmit} noValidate>
-                <div className="contact-form-row">
-                  <div className="form-group">
-                    <label htmlFor="review-first-name">
-                      First Name <span className="required-star">*</span>
-                    </label>
-                    <input
-                      id="review-first-name"
-                      name="firstName"
-                      type="text"
-                      placeholder="First Name"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      disabled={submitting}
-                      maxLength={100}
-                      aria-required="true"
-                      aria-invalid={!!errors.firstName}
-                    />
-                    {errors.firstName && (
-                      <span className="field-error">{errors.firstName}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="review-last-name">
-                      Last Name <span className="required-star">*</span>
-                    </label>
-                    <input
-                      id="review-last-name"
-                      name="lastName"
-                      type="text"
-                      placeholder="Last Name"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      disabled={submitting}
-                      maxLength={100}
-                      aria-required="true"
-                      aria-invalid={!!errors.lastName}
-                    />
-                    {errors.lastName && (
-                      <span className="field-error">{errors.lastName}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    Rating <span className="required-star">*</span>
-                  </label>
-                  <div
-                    className="star-rating-control"
-                    role="radiogroup"
-                    aria-label="Star Rating"
-                  >
-                    {[1, 2, 3, 4, 5].map((starValue) => {
-                      const isFilled = activeRating >= starValue;
-                      return (
-                        <button
-                          key={starValue}
-                          type="button"
-                          className="star-rating-btn"
-                          onClick={() => handleRatingSelect(starValue)}
-                          onMouseEnter={() => setHoverRating(starValue)}
-                          onMouseLeave={() => setHoverRating(0)}
-                          disabled={submitting}
-                          role="radio"
-                          aria-checked={formData.rating === starValue}
-                          aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
-                        >
-                          <span
-                            className={`material-symbols-outlined ${isFilled ? "filled" : ""}`}
-                            style={{
-                              color: isFilled ? "#eab308" : "#94a3b8",
-                              fontSize: "28px",
-                            }}
-                          >
-                            star
-                          </span>
-                        </button>
-                      );
-                    })}
-                    <span className="star-rating-hint">
-                      {formData.rating > 0
-                        ? `${formData.rating} of 5 stars`
-                        : "Select a rating"}
-                    </span>
-                  </div>
-                  {errors.rating && (
-                    <span className="field-error">{errors.rating}</span>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <label htmlFor="review-message">
-                      Message <span className="required-star">*</span>
-                    </label>
-                    <span className="char-count">
-                      {formData.message.length} / 1000
-                    </span>
-                  </div>
-                  <textarea
-                    id="review-message"
-                    name="message"
-                    rows="4"
-                    placeholder="Share your experience with us..."
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    disabled={submitting}
-                    maxLength={1000}
-                    aria-required="true"
-                    aria-invalid={!!errors.message}
-                  ></textarea>
-                  {errors.message && (
-                    <span className="field-error">{errors.message}</span>
-                  )}
-                </div>
-
-                {editingReview ? (
-                  <div className="contact-form-edit-actions">
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      disabled={submitting}
-                    >
-                      {submitting ? "Saving Changes..." : "Save Changes"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      onClick={handleCancelClick}
-                      disabled={submitting}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-block"
-                    disabled={submitting}
-                  >
-                    {submitting ? "Sending Review..." : "Send Review"}
-                  </button>
+          <form className="contact-form" onSubmit={handleSubmit} noValidate>
+            <div className="contact-form-row">
+              <div className="form-group">
+                <label htmlFor="review-first-name">
+                  First Name <span className="required-star">*</span>
+                </label>
+                <input
+                  id="review-first-name"
+                  name="firstName"
+                  type="text"
+                  placeholder="First Name"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  maxLength={100}
+                  aria-required="true"
+                  aria-invalid={!!errors.firstName}
+                />
+                {errors.firstName && (
+                  <span className="field-error">{errors.firstName}</span>
                 )}
-              </form>
-            </>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="review-last-name">
+                  Last Name <span className="required-star">*</span>
+                </label>
+                <input
+                  id="review-last-name"
+                  name="lastName"
+                  type="text"
+                  placeholder="Last Name"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  maxLength={100}
+                  aria-required="true"
+                  aria-invalid={!!errors.lastName}
+                />
+                {errors.lastName && (
+                  <span className="field-error">{errors.lastName}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>
+                Rating <span className="required-star">*</span>
+              </label>
+              <div
+                className="star-rating-control"
+                role="radiogroup"
+                aria-label="Star Rating"
+              >
+                {[1, 2, 3, 4, 5].map((starValue) => {
+                  const isFilled = activeRating >= starValue;
+                  return (
+                    <button
+                      key={starValue}
+                      type="button"
+                      className="star-rating-btn"
+                      onClick={() => handleRatingSelect(starValue)}
+                      onMouseEnter={() => setHoverRating(starValue)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      disabled={submitting}
+                      role="radio"
+                      aria-checked={formData.rating === starValue}
+                      aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
+                    >
+                      <span
+                        className={`material-symbols-outlined ${isFilled ? "filled" : ""}`}
+                        style={{
+                          color: isFilled ? "#eab308" : "#94a3b8",
+                          fontSize: "28px",
+                        }}
+                      >
+                        star
+                      </span>
+                    </button>
+                  );
+                })}
+                <span className="star-rating-hint">
+                  {formData.rating > 0
+                    ? `${formData.rating} of 5 stars`
+                    : "Select a rating"}
+                </span>
+              </div>
+              {errors.rating && (
+                <span className="field-error">{errors.rating}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <label htmlFor="review-message">
+                  Message <span className="required-star">*</span>
+                </label>
+                <span className="char-count">
+                  {formData.message.length} / 1000
+                </span>
+              </div>
+              <textarea
+                id="review-message"
+                name="message"
+                rows="4"
+                placeholder="Share your experience with us..."
+                value={formData.message}
+                onChange={handleInputChange}
+                disabled={submitting}
+                maxLength={1000}
+                aria-required="true"
+                aria-invalid={!!errors.message}
+              ></textarea>
+              {errors.message && (
+                <span className="field-error">{errors.message}</span>
+              )}
+            </div>
+
+            {editingReview ? (
+              <div className="contact-form-edit-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting ? "Saving Changes..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleCancelClick}
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className="btn btn-primary btn-block"
+                disabled={submitting}
+              >
+                {submitting ? "Sending Review..." : "Send Review"}
+              </button>
+            )}
+          </form>
+
+          {!isAuthenticated && !editingReview && (
+            <p className="review-auth-hint">
+              <span className="material-symbols-outlined">info</span>
+              You'll be asked to log in when you submit your review.
+            </p>
           )}
         </div>
       </div>
