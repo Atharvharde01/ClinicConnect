@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateTokens.js";
 import Patient from "../models/Patient.js";
 import Otp from "../models/Otp.js";
-import { sendEmail } from "../utils/sendEmail.js";
+import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { generatePatientId } from "../utils/generatePatientId.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -199,7 +199,7 @@ export const sendPatientOtp = async (req, res) => {
       </div>
     `;
 
-    await sendEmail(patient.email, "Clinic Connect - Login OTP", html);
+    await sendOtpEmail(patient.email, "Clinic Connect - Login OTP", html);
 
     return res.status(200).json({
       success: true,
@@ -377,7 +377,7 @@ export const resendPatientOtp = async (req, res) => {
       </div>
     `;
 
-    await sendEmail(patient.email, "Clinic Connect - Resend OTP", html);
+    await sendOtpEmail(patient.email, "Clinic Connect - Resend OTP", html);
 
     return res.status(200).json({
       success: true,
@@ -506,7 +506,7 @@ const html = `
 </div>
 `;
 
-await sendEmail(
+await sendOtpEmail(
   email,
   "Clinic Connect - Verify Your Account",
   html
@@ -617,7 +617,7 @@ export const staffForgotPassword = async (req, res) => {
       </div>
     `;
 
-    await sendEmail(user.email, "ClinicConnect - Password Reset OTP", html);
+    await sendOtpEmail(user.email, "ClinicConnect - Password Reset OTP", html);
 
     return res.status(200).json({
       success: true,
